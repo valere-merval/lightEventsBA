@@ -1,5 +1,6 @@
 package com.lightevents.events;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,8 +12,8 @@ import java.util.UUID;
 public class Attendee {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "event_id") private Event event;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "ticket_type_id") private TicketType ticketType;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "event_id") @JsonIgnore private Event event;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "ticket_type_id") @JsonIgnore private TicketType ticketType;
     @NotBlank private String fullName;
     @Email private String email;
     private String phone;

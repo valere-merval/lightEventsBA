@@ -1,67 +1,35 @@
 package com.lightevents.events;
 
+import com.lightevents.auth.Account;
 import com.lightevents.shared.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.List;
 
 @Service
 public class EventService {
-    private final EventRepository events;
-    private final TicketTypeRepository tickets;
-    private final AttendeeRepository attendees;
-
-    public EventService(EventRepository events, TicketTypeRepository tickets, AttendeeRepository attendees) {
-        this.events = events; this.tickets = tickets; this.attendees = attendees;
-    }
-
-    public List<Event> published() { return events.findByStatusOrderByStartsAtAsc(EventStatus.PUBLISHED); }
+    private final EventRepository events; private final TicketTypeRepository tickets; private final AttendeeRepository attendees; private final ReservationRepository reservations; private final TicketLookupCodeRepository lookupCodes; private final SecureRandom random = new SecureRandom();
+    public EventService(EventRepository events, TicketTypeRepository tickets, AttendeeRepository attendees, ReservationRepository reservations, TicketLookupCodeRepository lookupCodes) { this.events = events; this.tickets = tickets; this.attendees = attendees; this.reservations = reservations; this.lookupCodes = lookupCodes; }
+    public List<Event> published(String country, String city, String category) { if(category!=null&&!category.isBlank()) return events.findByStatusAndCategoryIgnoreCaseOrderByStartsAtAsc(EventStatus.PUBLISHED, category); if(city!=null&&!city.isBlank()) return events.findByStatusAndCityIgnoreCaseOrderByStartsAtAsc(EventStatus.PUBLISHED, city); if(country!=null&&!country.isBlank()) return events.findByStatusAndCountryIgnoreCaseOrderByStartsAtAsc(EventStatus.PUBLISHED, country); return events.findByStatusOrderByStartsAtAsc(EventStatus.PUBLISHED); }
     public List<Event> all() { return events.findAll(); }
     public Event get(Long id) { return events.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Event not found")); }
-
-    @Transactional
-    public Event create(EventDtos.CreateEventRequest req) {
-        Event e = new Event();
-        e.setTitle(req.title()); e.setDescription(req.description()); e.setCoverImageUrl(req.coverImageUrl()); e.setCategory(req.category());
-        e.setCity(req.city()); e.setCountry(req.country()); e.setVenueName(req.venueName()); e.setOnline(req.online());
-        e.setOrganizerName(req.organizerName()); e.setOrganizerEmail(req.organizerEmail()); e.setStartsAt(req.startsAt()); e.setEndsAt(req.endsAt());
-        e.setCapacity(req.capacity()); e.setStatus(EventStatus.PUBLISHED);
-        if (req.brandColor() != null && !req.brandColor().isBlank()) e.setBrandColor(req.brandColor());
-        return events.save(e);
-    }
-
-    @Transactional
-    public TicketType addTicket(Long eventId, EventDtos.CreateTicketRequest req) {
-        Event event = get(eventId);
-        TicketType t = new TicketType();
-        t.setEvent(event); t.setName(req.name()); t.setKind(req.kind() == null ? TicketKind.FREE : req.kind());
-        t.setPrice(req.price() == null ? java.math.BigDecimal.ZERO : req.price()); t.setCurrency(req.currency() == null ? "XOF" : req.currency()); t.setQuantity(req.quantity());
-        return tickets.save(t);
-    }
-
-    @Transactional
-    public Attendee register(Long eventId, EventDtos.RegisterAttendeeRequest req) {
-        Event event = get(eventId);
-        TicketType ticket = tickets.findById(req.ticketTypeId()).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ticket type not found"));
-        if (!ticket.getEvent().getId().equals(event.getId())) throw new ApiException(HttpStatus.BAD_REQUEST, "Ticket does not belong to this event");
-        if (ticket.getSold() >= ticket.getQuantity()) throw new ApiException(HttpStatus.CONFLICT, "Ticket type sold out");
-        Attendee a = new Attendee();
-        a.setEvent(event); a.setTicketType(ticket); a.setFullName(req.fullName()); a.setEmail(req.email()); a.setPhone(req.phone()); a.setCompany(req.company()); a.setRoleTitle(req.roleTitle());
-        a.setStatus(ticket.getPrice().signum() > 0 ? CheckInStatus.RESERVED : CheckInStatus.PAID);
-        ticket.setSold(ticket.getSold() + 1);
-        tickets.save(ticket);
-        return attendees.save(a);
-    }
-
-    @Transactional
-    public Attendee checkIn(String qrCode) {
-        Attendee a = attendees.findByQrCode(qrCode).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "QR code invalid"));
-        if (a.getStatus() == CheckInStatus.CHECKED_IN) throw new ApiException(HttpStatus.CONFLICT, "Ticket already checked in");
-        a.checkIn();
-        return attendees.save(a);
-    }
-
+    @Transactional public Event create(EventDtos.CreateEventRequest req, Account organizer) { Event e = new Event(); e.setTitle(req.title()); e.setDescription(req.description()); e.setCoverImageUrl(req.coverImageUrl()!=null?req.coverImageUrl():generatedImage(req)); e.setCategory(normalizeCategory(req.category(), req.customCategory())); e.setCustomCategory(req.customCategory()); e.setCity(req.city()); e.setCountry(req.country()); e.setVenueName(req.venueName()); e.setOnline(req.online()); e.setOrganizerName(req.organizerName()); e.setOrganizerEmail(req.organizerEmail()); e.setStartsAt(req.startsAt()); e.setEndsAt(req.endsAt()); e.setCapacity(req.capacity()); e.setStatus(EventStatus.PUBLISHED); if(req.brandColor()!=null&&!req.brandColor().isBlank()) e.setBrandColor(req.brandColor()); e.setLatitude(req.latitude()); e.setLongitude(req.longitude()); e.setMediaUrls(req.mediaUrls()==null?null:String.join(",",req.mediaUrls())); e.setVideoUrl(req.videoUrl()); e.setGeneratedImageUrl(generatedImage(req)); e.setAllowedPaymentMethods(req.allowedPaymentMethods()==null?"ORANGE_MONEY,MTN_MONEY,WAVE,AIRTEL_MONEY,STRIPE":String.join(",",req.allowedPaymentMethods())); e.setReservationFreeUntil(req.reservationFreeUntil()); e.setPublishChannels(req.publishChannels()==null?null:String.join(",",req.publishChannels())); e.setOrganizerAccount(organizer); return events.save(e); }
+    @Transactional public TicketType addTicket(Long eventId, EventDtos.CreateTicketRequest req) { Event event = get(eventId); TicketType t = new TicketType(); t.setEvent(event); t.setName(req.name()); t.setKind(req.kind()==null?TicketKind.FREE:req.kind()); t.setPrice(req.price()==null?BigDecimal.ZERO:req.price()); t.setCurrency(req.currency()==null?"XOF":req.currency()); t.setQuantity(req.quantity()); return tickets.save(t); }
+    @Transactional public Attendee register(Long eventId, EventDtos.RegisterAttendeeRequest req) { return reserve(eventId, new EventDtos.ReserveTicketsRequest(req.fullName(), req.email(), req.phone(), null, false, null, req.ticketTypeId(), 1, List.of(new EventDtos.TicketHolder(req.fullName(), req.email(), req.phone(), null)))).attendees().getFirst(); }
+    public record ReservationResult(Reservation reservation, List<Attendee> attendees, String paymentLink, String message) {}
+    @Transactional public ReservationResult reserve(Long eventId, EventDtos.ReserveTicketsRequest req) { Event event=get(eventId); TicketType ticket=tickets.findById(req.ticketTypeId()).orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,"Ticket type not found")); if(!ticket.getEvent().getId().equals(event.getId())) throw new ApiException(HttpStatus.BAD_REQUEST,"Ticket does not belong to this event"); int qty=req.quantity(); if(ticket.getSold()+qty>ticket.getQuantity()) throw new ApiException(HttpStatus.CONFLICT,"Not enough tickets available"); BigDecimal gross=ticket.getPrice().multiply(BigDecimal.valueOf(qty)); BigDecimal fee=gross.multiply(new BigDecimal("0.045")).setScale(2, RoundingMode.HALF_UP); Reservation r=new Reservation(); r.setEventId(eventId); r.setTicketTypeId(ticket.getId()); r.setBuyerName(req.buyerName()); r.setBuyerEmail(req.buyerEmail()); r.setBuyerPhone(req.buyerPhone()); r.setBuyerWhatsapp(req.buyerWhatsapp()); r.setCompanyPurchase(req.companyPurchase()); r.setCompanyName(req.companyName()); r.setQuantity(qty); r.setGrossAmount(gross); r.setPlatformFee(fee); r.setOrganizerNet(gross.subtract(fee)); r.setStatus(gross.signum()==0?ReservationStatus.PAID:ReservationStatus.HELD); r.setExpiresAt(Instant.now().plusSeconds(48*3600)); r=reservations.save(r); List<EventDtos.TicketHolder> holders=req.holders()==null||req.holders().isEmpty()?List.of(new EventDtos.TicketHolder(req.buyerName(),req.buyerEmail(),req.buyerPhone(),req.buyerWhatsapp())):req.holders(); java.util.ArrayList<Attendee> created=new java.util.ArrayList<>(); for(int i=0;i<qty;i++){ EventDtos.TicketHolder h=holders.get(Math.min(i,holders.size()-1)); Attendee a=new Attendee(); a.setEvent(event); a.setTicketType(ticket); a.setFullName(h.fullName()==null?req.buyerName():h.fullName()); a.setEmail(h.email()==null?req.buyerEmail():h.email()); a.setPhone(h.phone()==null?req.buyerPhone():h.phone()); a.setStatus(gross.signum()==0?CheckInStatus.PAID:CheckInStatus.RESERVED); created.add(attendees.save(a)); } ticket.setSold(ticket.getSold()+qty); tickets.save(ticket); return new ReservationResult(r,created,"/api/payments/mobile-money/initiate","Reservation created. Send confirmation links by email/WhatsApp/SMS."); }
+    @Transactional public Reservation confirmPayment(String reference, String paymentReference) { Reservation r=reservations.findByReference(reference).orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,"Reservation not found")); r.setStatus(ReservationStatus.PAID); // attendee statuses can be upgraded by reservation reference in a future relation table
+        return reservations.save(r); }
+    @Transactional public Attendee checkIn(String qrCode) { Attendee a=attendees.findByQrCode(qrCode).orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,"QR code invalid")); if(a.getStatus()==CheckInStatus.CHECKED_IN) throw new ApiException(HttpStatus.CONFLICT,"Ticket already checked in"); a.checkIn(); return attendees.save(a); }
     public List<Attendee> attendees(Long eventId) { return attendees.findByEventId(eventId); }
+    @Transactional public TicketLookupCode requestLookupCode(String email){ TicketLookupCode c=new TicketLookupCode(); c.setEmail(email); c.setCode(String.valueOf(100000+random.nextInt(900000))); c.setExpiresAt(Instant.now().plusSeconds(900)); return lookupCodes.save(c); }
+    public List<Attendee> verifyLookup(String email,String code){ TicketLookupCode c=lookupCodes.findTopByEmailIgnoreCaseOrderByIdDesc(email).orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,"Code not found")); if(c.getExpiresAt().isBefore(Instant.now())||!c.getCode().equals(code)) throw new ApiException(HttpStatus.BAD_REQUEST,"Invalid code"); return attendees.findAll().stream().filter(a->email.equalsIgnoreCase(a.getEmail())).toList(); }
+    private String generatedImage(EventDtos.CreateEventRequest req){ return "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1600&q=80"; }
+    private String normalizeCategory(String category,String custom){ return custom!=null&&!custom.isBlank()?custom:(category==null||category.isBlank()?"business":category.toLowerCase()); }
 }

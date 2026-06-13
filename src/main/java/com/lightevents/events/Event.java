@@ -1,5 +1,7 @@
 package com.lightevents.events;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.lightevents.auth.Account;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +30,16 @@ public class Event {
     @Enumerated(EnumType.STRING) private EventStatus status = EventStatus.DRAFT;
     private int capacity;
     private String brandColor = "#7c3aed";
+    private String customCategory;
+    private Double latitude;
+    private Double longitude;
+    @Column(length = 3000) private String mediaUrls;
+    private String videoUrl;
+    private String generatedImageUrl;
+    @Column(length = 1000) private String allowedPaymentMethods;
+    private java.time.LocalDateTime reservationFreeUntil;
+    @Column(length = 1000) private String publishChannels;
+    @ManyToOne(fetch = FetchType.LAZY) @JsonIgnore private Account organizerAccount;
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
 
@@ -70,4 +82,14 @@ public class Event {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public List<TicketType> getTickets() { return tickets; }
+    public String getCustomCategory(){return customCategory;} public void setCustomCategory(String v){customCategory=v;}
+    public Double getLatitude(){return latitude;} public void setLatitude(Double v){latitude=v;}
+    public Double getLongitude(){return longitude;} public void setLongitude(Double v){longitude=v;}
+    public String getMediaUrls(){return mediaUrls;} public void setMediaUrls(String v){mediaUrls=v;}
+    public String getVideoUrl(){return videoUrl;} public void setVideoUrl(String v){videoUrl=v;}
+    public String getGeneratedImageUrl(){return generatedImageUrl;} public void setGeneratedImageUrl(String v){generatedImageUrl=v;}
+    public String getAllowedPaymentMethods(){return allowedPaymentMethods;} public void setAllowedPaymentMethods(String v){allowedPaymentMethods=v;}
+    public java.time.LocalDateTime getReservationFreeUntil(){return reservationFreeUntil;} public void setReservationFreeUntil(java.time.LocalDateTime v){reservationFreeUntil=v;}
+    public String getPublishChannels(){return publishChannels;} public void setPublishChannels(String v){publishChannels=v;}
+    public Account getOrganizerAccount(){return organizerAccount;} public void setOrganizerAccount(Account v){organizerAccount=v;}
 }

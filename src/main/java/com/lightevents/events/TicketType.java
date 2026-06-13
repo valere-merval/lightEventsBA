@@ -1,5 +1,6 @@
 package com.lightevents.events;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
@@ -11,7 +12,7 @@ public class TicketType {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "event_id")
-    private Event event;
+    @JsonIgnore private Event event;
     @NotBlank private String name;
     @Enumerated(EnumType.STRING) private TicketKind kind = TicketKind.FREE;
     private BigDecimal price = BigDecimal.ZERO;
