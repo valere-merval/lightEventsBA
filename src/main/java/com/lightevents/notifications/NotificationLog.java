@@ -1,0 +1,4 @@
+package com.lightevents.notifications;
+import jakarta.persistence.*; import java.time.Instant;
+@Entity @Table(name="notification_logs")
+public class NotificationLog { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; private String channel; private String recipient; private String subject; @Column(length=2000) private String message; private String status="QUEUED"; private Instant createdAt=Instant.now(); public Long getId(){return id;} public String getChannel(){return channel;} public void setChannel(String v){channel=v;} public String getRecipient(){return recipient;} public void setRecipient(String v){recipient=v;} public String getSubject(){return subject;} public void setSubject(String v){subject=v;} public String getMessage(){return message;} public void setMessage(String v){message=v;} public String getStatus(){return status;} public void setStatus(String v){status=v;} public Instant getCreatedAt(){return createdAt;} }

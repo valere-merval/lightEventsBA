@@ -1,0 +1,4 @@
+package com.lightevents.networking;
+import jakarta.persistence.*; import java.time.Instant;
+@Entity @Table(name="connections")
+public class Connection { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; private Long requesterProfileId; private Long targetProfileId; private String status="PENDING"; private String note; private Instant createdAt=Instant.now(); public Long getId(){return id;} public Long getRequesterProfileId(){return requesterProfileId;} public void setRequesterProfileId(Long v){requesterProfileId=v;} public Long getTargetProfileId(){return targetProfileId;} public void setTargetProfileId(Long v){targetProfileId=v;} public String getStatus(){return status;} public void setStatus(String v){status=v;} public String getNote(){return note;} public void setNote(String v){note=v;} public Instant getCreatedAt(){return createdAt;} }

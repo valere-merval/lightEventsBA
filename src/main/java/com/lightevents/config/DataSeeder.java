@@ -1,0 +1,16 @@
+package com.lightevents.config;
+import com.lightevents.community.*; import com.lightevents.events.*; import com.lightevents.profiles.*; import org.springframework.boot.CommandLineRunner; import org.springframework.context.annotation.Bean; import org.springframework.context.annotation.Configuration;
+import java.math.BigDecimal; import java.time.LocalDateTime;
+@Configuration
+public class DataSeeder {
+ @Bean CommandLineRunner seed(EventRepository events, TicketTypeRepository tickets, UserProfileRepository profiles, CommunityRepository communities){ return args -> { if(events.count()>0) return;
+  Event e=new Event(); e.setTitle("Abidjan Founder Night"); e.setDescription("Networking premium pour entrepreneurs, investisseurs et talents tech africains."); e.setCategory("Business"); e.setCity("Abidjan"); e.setCountry("Côte d’Ivoire"); e.setVenueName("Plateau Innovation Hub"); e.setOrganizerName("LightEvents"); e.setOrganizerEmail("hello@lightevents.africa"); e.setStartsAt(LocalDateTime.now().plusDays(21)); e.setEndsAt(LocalDateTime.now().plusDays(21).plusHours(4)); e.setCapacity(250); e.setStatus(EventStatus.PUBLISHED); e.setBrandColor("#ff7a1a"); e=events.save(e);
+  TicketType t=new TicketType(); t.setEvent(e); t.setName("Early Founder"); t.setKind(TicketKind.PAID); t.setPrice(new BigDecimal("7500")); t.setCurrency("XOF"); t.setQuantity(120); tickets.save(t);
+  TicketType vip=new TicketType(); vip.setEvent(e); vip.setName("VIP Investor Lounge"); vip.setKind(TicketKind.VIP); vip.setPrice(new BigDecimal("25000")); vip.setCurrency("XOF"); vip.setQuantity(30); tickets.save(vip);
+  UserProfile a=profile("Awa Koné","Founder fintech","NimbaPay","investisseurs, partenaires bancaires","mobile money, paiement, fintech","+2250700000001"); profiles.save(a);
+  UserProfile b=profile("Marc Diby","CTO SaaS","CloudKite","clients PME, commerciaux","SaaS, IA, automatisation","+2250700000002"); profiles.save(b);
+  UserProfile c=profile("Nadia Sow","Investisseuse seed","Baobab Capital","startups B2B, fintech","investissement, stratégie, réseau","+221770000003"); profiles.save(c);
+  Community cm=new Community(); cm.setName("Entrepreneurs Afrique Francophone"); cm.setSlug("entrepreneurs-afrique-francophone"); cm.setCategory("Business"); cm.setCity("Afrique francophone"); cm.setDescription("Communauté pour créer des opportunités business avant, pendant et après les événements."); cm.setPremium(true); communities.save(cm);
+ }; }
+ private static UserProfile profile(String name,String headline,String company,String looking,String offering,String wa){ UserProfile p=new UserProfile(); p.setFullName(name); p.setEmail(name.toLowerCase().replace(" ",".")+"@demo.lightevents.africa"); p.setHeadline(headline); p.setCompany(company); p.setCity("Abidjan"); p.setCountry("Côte d’Ivoire"); p.setLookingFor(looking); p.setOffering(offering); p.setSkills(offering); p.setWhatsappNumber(wa); return p; }
+}
