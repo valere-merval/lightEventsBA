@@ -19,6 +19,7 @@ public class Attendee {
     private String phone;
     private String company;
     private String roleTitle;
+    private String countryOfResidence;
     @Enumerated(EnumType.STRING) private CheckInStatus status = CheckInStatus.RESERVED;
     @Column(unique = true, nullable = false) private String qrCode = UUID.randomUUID().toString();
     private Instant registeredAt = Instant.now();
@@ -39,6 +40,8 @@ public class Attendee {
     public void setCompany(String company) { this.company = company; }
     public String getRoleTitle() { return roleTitle; }
     public void setRoleTitle(String roleTitle) { this.roleTitle = roleTitle; }
+    public String getCountryOfResidence() { return countryOfResidence; }
+    public void setCountryOfResidence(String countryOfResidence) { this.countryOfResidence = countryOfResidence; }
     public CheckInStatus getStatus() { return status; }
     public void setStatus(CheckInStatus status) { this.status = status; }
     public String getQrCode() { return qrCode; }

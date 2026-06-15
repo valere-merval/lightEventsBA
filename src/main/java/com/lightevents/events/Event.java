@@ -22,7 +22,13 @@ public class Event {
     private String city;
     private String country;
     private String venueName;
+    private String roomName;
+    @Column(length = 1200) private String addressLine;
+    private String postalCode;
+    private String state;
+    private String countryCode;
     private boolean online;
+    @Column(length = 1200) private String onlineAccessUrl;
     private String organizerName;
     private String organizerEmail;
     @NotNull private LocalDateTime startsAt;
@@ -63,8 +69,20 @@ public class Event {
     public void setCountry(String country) { this.country = country; }
     public String getVenueName() { return venueName; }
     public void setVenueName(String venueName) { this.venueName = venueName; }
+    public String getRoomName() { return roomName; }
+    public void setRoomName(String roomName) { this.roomName = roomName; }
+    public String getAddressLine() { return addressLine; }
+    public void setAddressLine(String addressLine) { this.addressLine = addressLine; }
+    public String getPostalCode() { return postalCode; }
+    public void setPostalCode(String postalCode) { this.postalCode = postalCode; }
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
+    public String getCountryCode() { return countryCode; }
+    public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
     public boolean isOnline() { return online; }
     public void setOnline(boolean online) { this.online = online; }
+    public String getOnlineAccessUrl() { return onlineAccessUrl; }
+    public void setOnlineAccessUrl(String onlineAccessUrl) { this.onlineAccessUrl = onlineAccessUrl; }
     public String getOrganizerName() { return organizerName; }
     public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
     public String getOrganizerEmail() { return organizerEmail; }
