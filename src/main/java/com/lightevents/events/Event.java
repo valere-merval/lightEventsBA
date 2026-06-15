@@ -44,6 +44,7 @@ public class Event {
     private String generatedImageUrl;
     @Column(length = 1000) private String allowedPaymentMethods;
     private java.time.LocalDateTime reservationFreeUntil;
+    private Integer reservationHoldDays = 2;
     @Column(length = 1000) private String publishChannels;
     @ManyToOne(fetch = FetchType.LAZY) @JsonIgnore private Account organizerAccount;
     private Instant createdAt = Instant.now();
@@ -108,6 +109,7 @@ public class Event {
     public String getGeneratedImageUrl(){return generatedImageUrl;} public void setGeneratedImageUrl(String v){generatedImageUrl=v;}
     public String getAllowedPaymentMethods(){return allowedPaymentMethods;} public void setAllowedPaymentMethods(String v){allowedPaymentMethods=v;}
     public java.time.LocalDateTime getReservationFreeUntil(){return reservationFreeUntil;} public void setReservationFreeUntil(java.time.LocalDateTime v){reservationFreeUntil=v;}
+    public Integer getReservationHoldDays(){return reservationHoldDays;} public void setReservationHoldDays(Integer v){reservationHoldDays=v;}
     public String getPublishChannels(){return publishChannels;} public void setPublishChannels(String v){publishChannels=v;}
     public Account getOrganizerAccount(){return organizerAccount;} public void setOrganizerAccount(Account v){organizerAccount=v;}
 }
