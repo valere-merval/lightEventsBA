@@ -21,6 +21,6 @@ public class EventController {
     @PostMapping("/reservations/{reference}/confirm-payment") public Reservation confirmPayment(@PathVariable String reference, @RequestBody EventDtos.ConfirmReservationPaymentRequest request){ return service.confirmPayment(reference, request.paymentReference()); }
     @GetMapping("/{id}/attendees") public List<Attendee> attendees(@PathVariable Long id) { return service.attendees(id); }
     @PostMapping("/check-in") public Attendee checkIn(@Valid @RequestBody EventDtos.CheckInRequest request) { return service.checkIn(request.qrCode()); }
-    @PostMapping("/tickets/lookup/request-code") public TicketLookupCode requestTickets(@Valid @RequestBody EventDtos.TicketLookupRequest r){ return service.requestLookupCode(r.email()); }
-    @PostMapping("/tickets/lookup/verify") public List<Attendee> verifyTickets(@Valid @RequestBody EventDtos.TicketLookupVerifyRequest r){ return service.verifyLookup(r.email(), r.code()); }
+    @PostMapping("/tickets/lookup/request-code") public TicketLookupCode requestTickets(@Valid @RequestBody EventDtos.TicketLookupRequest r){ String dest = r.destination()!=null&&!r.destination().isBlank()?r.destination():r.email(); return service.requestLookupCode(r.channel()==null?"email":r.channel(), dest); }
+    @PostMapping("/tickets/lookup/verify") public EventService.TicketHistory verifyTickets(@Valid @RequestBody EventDtos.TicketLookupVerifyRequest r){ String dest = r.destination()!=null&&!r.destination().isBlank()?r.destination():r.email(); return service.verifyLookup(r.channel()==null?"email":r.channel(), dest, r.code()); }
 }

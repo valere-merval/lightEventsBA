@@ -12,7 +12,8 @@ public final class EventDtos {
     public record TicketHolder(String fullName, @Email String email, String phone, String whatsapp, String countryOfResidence) {}
     public record ReserveTicketsRequest(@NotBlank String buyerName, @Email String buyerEmail, String buyerPhone, String buyerWhatsapp, boolean companyPurchase, String companyName, String deliveryPreference, @NotNull Long ticketTypeId, @Min(1) int quantity, List<TicketHolder> holders) {}
     public record ConfirmReservationPaymentRequest(@NotBlank String paymentReference) {}
-    public record TicketLookupRequest(@Email @NotBlank String email) {}
-    public record TicketLookupVerifyRequest(@Email @NotBlank String email, @NotBlank String code) {}
+    public record ContactOrganizerRequest(@NotBlank String fullName, @Email String email, String phone, String whatsapp, String countryOfResidence, String message) {}
+    public record TicketLookupRequest(String channel, String destination, @Email String email) {}
+    public record TicketLookupVerifyRequest(String channel, String destination, @Email String email, @NotBlank String code) {}
     public record CheckInRequest(@NotBlank String qrCode) {}
 }
