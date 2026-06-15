@@ -26,7 +26,7 @@ public class MediaService {
     @Value("${s3.access-key:}") private String accessKey;
     @Value("${s3.secret-key:}") private String secretKey;
     @Value("${openai.api-key:}") private String openAiKey;
-    @Value("${openai.image-model:gpt-image-1}") private String imageModel;
+    @Value("${openai.image-model:gpt-image-1.5}") private String imageModel;
     private final RestClient rest = RestClient.create("https://api.openai.com/v1");
     private final SecureRandom random = new SecureRandom();
 
@@ -42,12 +42,12 @@ public class MediaService {
         if (blank(openAiKey)) return null;
         try {
             String prompt = "Affiche premium moderne pour un événement LightEvents. Titre: " + safe(title) + ". Description: " + safe(description) + ". Style: élégant, professionnel, lumineux, sans texte illisible.";
-            Map<String,Object> req = Map.of("model", imageModel, "prompt", prompt, "size", "1024x1024", "response_format", "b64_json");
+            Map<String,Object> req = Map.of("model", imageModel, "prompt", prompt, "size", "1024x1024");
             Map res = rest.post().uri("/images/generations").headers(h -> h.setBearerAuth(openAiKey)).body(req).retrieve().body(Map.class);
             List data = (List) res.get("data"); Map first = (Map) data.get(0); String b64 = String.valueOf(first.get("b64_json"));
             byte[] bytes = Base64.getDecoder().decode(b64);
             return uploadBytes(bytes, "image/png", "events/generated/" + Instant.now().toEpochMilli() + "-cover.png");
-        } catch (Exception e) { return null; }
+        } catch (Exception e) { throw new IllegalStateException("OpenAI image generation failed: " + e.getMessage(), e); }
     }
 
     private MediaUpload uploadBytes(byte[] bytes, String contentType, String key) throws Exception {

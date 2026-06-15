@@ -14,6 +14,7 @@ public class TicketType {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "event_id")
     @JsonIgnore private Event event;
     @NotBlank private String name;
+    @Column(length = 1000) private String description;
     @Enumerated(EnumType.STRING) private TicketKind kind = TicketKind.FREE;
     private BigDecimal price = BigDecimal.ZERO;
     private String currency = "XOF";
@@ -26,6 +27,8 @@ public class TicketType {
     public void setEvent(Event event) { this.event = event; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public TicketKind getKind() { return kind; }
     public void setKind(TicketKind kind) { this.kind = kind; }
     public BigDecimal getPrice() { return price; }
