@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: lightevents-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://valere-merval.github.io,https://valere-merval.github.io/lightEventsFE
+      - key: FRONTEND_URL
+        value: https://valere-merval.github.io/lightEventsFE
+      - key: JPA_DDL_AUTO
+        value: update
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lightevents-db
+          property: connectionString
+      - key: DATABASE_USERNAME
+        fromDatabase:
+          name: lightevents-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: lightevents-db
+          property: password
+      - key: DATABASE_DRIVER
+        value: org.postgresql.Driver
+
+databases:
+  - name: lightevents-db
+    plan: free
