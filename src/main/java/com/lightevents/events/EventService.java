@@ -14,13 +14,29 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class EventService {
     private final EventRepository events; private final TicketTypeRepository tickets; private final AttendeeRepository attendees; private final ReservationRepository reservations; private final TicketLookupCodeRepository lookupCodes; private final InvoiceService invoices; private final MediaService media; private final java.util.Optional<NotificationService> notifications; private final SecureRandom random = new SecureRandom();
     public EventService(EventRepository events, TicketTypeRepository tickets, AttendeeRepository attendees, ReservationRepository reservations, TicketLookupCodeRepository lookupCodes, InvoiceService invoices, MediaService media, java.util.Optional<NotificationService> notifications) { this.events = events; this.tickets = tickets; this.attendees = attendees; this.reservations = reservations; this.lookupCodes = lookupCodes; this.invoices = invoices; this.media = media; this.notifications = notifications; }
-    public List<Event> published(String country, String city, String category) { if(category!=null&&!category.isBlank()) return events.findByStatusAndCategoryIgnoreCaseOrderByStartsAtAsc(EventStatus.PUBLISHED, category); if(city!=null&&!city.isBlank()) return events.findByStatusAndCityIgnoreCaseOrderByStartsAtAsc(EventStatus.PUBLISHED, city); if(country!=null&&!country.isBlank()) return events.findByStatusAndCountryIgnoreCaseOrderByStartsAtAsc(EventStatus.PUBLISHED, country); return events.findByStatusOrderByStartsAtAsc(EventStatus.PUBLISHED); }
+    public List<Event> published(String country, String city, String category) { return published(country, city, category, null, null, null, true); }
+    public List<Event> published(String country, String city, String category, String organizer, String from, String to, boolean upcomingOnly) {
+        LocalDateTime fromDate = parseDateTime(from);
+        LocalDateTime toDate = parseDateTime(to);
+        LocalDateTime now = LocalDateTime.now();
+        return events.findByStatusOrderByStartsAtAsc(EventStatus.PUBLISHED).stream()
+                .filter(e -> blank(country) || same(country, e.getCountry()) || same(country, e.getCountryCode()))
+                .filter(e -> blank(city) || same(city, e.getCity()))
+                .filter(e -> blank(category) || same(category, e.getCategory()) || same(category, e.getCustomCategory()))
+                .filter(e -> blank(organizer) || contains(e.getOrganizerName(), organizer) || contains(e.getOrganizerEmail(), organizer))
+                .filter(e -> !upcomingOnly || e.getStartsAt() == null || !e.getStartsAt().isBefore(now.minusDays(1)))
+                .filter(e -> fromDate == null || e.getStartsAt() == null || !e.getStartsAt().isBefore(fromDate))
+                .filter(e -> toDate == null || e.getStartsAt() == null || !e.getStartsAt().isAfter(toDate))
+                .toList();
+    }
     public List<Event> all() { return events.findAll(); }
     public Event get(Long id) { return events.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Event not found")); }
     @Transactional public Event create(EventDtos.CreateEventRequest req, Account organizer) { Event e = new Event(); e.setTitle(req.title()); e.setDescription(req.description()); String cover = req.coverImageUrl()!=null&&!req.coverImageUrl().isBlank()?req.coverImageUrl():generatedImage(req); e.setCoverImageUrl(cover); e.setCategory(normalizeCategory(req.category(), req.customCategory())); e.setCustomCategory(req.customCategory()); e.setCity(req.city()); e.setCountry(req.country()); e.setVenueName(req.venueName()); e.setRoomName(req.roomName()); e.setAddressLine(req.addressLine()); e.setPostalCode(req.postalCode()); e.setState(req.state()); e.setCountryCode(req.countryCode()); e.setOnline(req.online()); e.setOnlineAccessUrl(req.onlineAccessUrl()); e.setOrganizerName(req.organizerName()); e.setOrganizerEmail(req.organizerEmail()); e.setStartsAt(req.startsAt()); e.setEndsAt(req.endsAt()); e.setCapacity(req.capacity()); e.setStatus(EventStatus.PUBLISHED); if(req.brandColor()!=null&&!req.brandColor().isBlank()) e.setBrandColor(req.brandColor()); e.setLatitude(req.latitude()); e.setLongitude(req.longitude()); e.setMediaUrls(req.mediaUrls()==null?null:String.join(",",req.mediaUrls())); e.setVideoUrl(req.videoUrl()); e.setGeneratedImageUrl(cover); e.setAllowedPaymentMethods("STRIPE,PAYPAL"); e.setReservationFreeUntil(req.reservationFreeUntil()); e.setReservationHoldDays(req.reservationHoldDays()==null||req.reservationHoldDays()<1?2:req.reservationHoldDays()); e.setPublishChannels(req.publishChannels()==null?null:String.join(",",req.publishChannels())); e.setOrganizerAccount(organizer); return events.save(e); }
@@ -36,6 +52,10 @@ public class EventService {
     @Transactional public TicketLookupCode requestLookupCode(String channel,String destination){ String dest=destination; TicketLookupCode c=new TicketLookupCode(); c.setEmail("email".equalsIgnoreCase(channel)?dest:null); c.setChannel(channel==null?"email":channel); c.setDestination(dest); c.setCode(String.valueOf(100000+random.nextInt(900000))); c.setExpiresAt(Instant.now().plusSeconds(900)); notifications.ifPresent(n->{ try{ if("whatsapp".equalsIgnoreCase(c.getChannel())) n.sendWhatsApp(dest,"Votre code LightEvents: "+c.getCode()); else if("phone".equalsIgnoreCase(c.getChannel())) n.sendSms(dest,"Votre code LightEvents: "+c.getCode()); else n.sendEmail(dest,"Code LightEvents", "Votre code: "+c.getCode()); }catch(Exception ignored){} }); return lookupCodes.save(c); }
     public record TicketHistory(List<Attendee> tickets, List<Reservation> purchases, List<Invoice> invoices){}
     public TicketHistory verifyLookup(String channel,String destination,String code){ TicketLookupCode c=lookupCodes.findTopByDestinationIgnoreCaseOrderByIdDesc(destination).orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,"Code not found")); if(c.getExpiresAt().isBefore(Instant.now())||!c.getCode().equals(code)) throw new ApiException(HttpStatus.BAD_REQUEST,"Invalid code"); List<Attendee> ts=attendees.findAll().stream().filter(a->matches(channel,destination,a)).toList(); List<Reservation> rs=reservations.findAll().stream().filter(r->matchesReservation(channel,destination,r)).toList(); return new TicketHistory(ts, rs, invoices.byIdentifier(channel,destination)); }
+
+    private static boolean blank(String v){ return v==null||v.isBlank(); }
+    private static boolean contains(String value,String needle){ return value!=null&&needle!=null&&value.toLowerCase().contains(needle.toLowerCase()); }
+    private static LocalDateTime parseDateTime(String v){ if(blank(v)) return null; try{return LocalDateTime.parse(v);}catch(Exception ignored){} try{return LocalDate.parse(v).atStartOfDay();}catch(Exception ignored){} return null; }
     private boolean matches(String channel,String destination,Attendee a){ if("phone".equalsIgnoreCase(channel)) return same(destination,a.getPhone()); if("whatsapp".equalsIgnoreCase(channel)) return same(destination,a.getPhone()); return same(destination,a.getEmail()); }
     private boolean matchesReservation(String channel,String destination,Reservation r){ if("phone".equalsIgnoreCase(channel)) return same(destination,r.getBuyerPhone()); if("whatsapp".equalsIgnoreCase(channel)) return same(destination,r.getBuyerWhatsapp()); return same(destination,r.getBuyerEmail()); }
     private static boolean same(String a,String b){return a!=null&&b!=null&&a.equalsIgnoreCase(b);}
