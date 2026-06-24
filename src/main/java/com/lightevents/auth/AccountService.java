@@ -117,6 +117,12 @@ public class AccountService {
         return a;
     }
 
+    public Account requireOrganizer(String token) {
+        Account a = requireVerified(token);
+        if (a.getRole() != AccountRole.ORGANIZER) throw new ApiException(HttpStatus.FORBIDDEN, "Un compte organisateur vérifié est requis pour publier un événement");
+        return a;
+    }
+
     public Account registerAdmin(AuthDtos.RegisterRequest r) {
         Account a = accounts.findByEmailIgnoreCase(normalizeEmail(r.email())).orElseGet(Account::new);
         a.setFullName(r.fullName());
