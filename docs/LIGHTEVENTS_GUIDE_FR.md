@@ -263,6 +263,17 @@ Important : les IDs de services GetMiPay peuvent dépendre du compte marchand et
 
 Les modules EventOps couvrent les fonctionnalités avancées nécessaires aux organisateurs professionnels.
 
+Utilisation dans le dashboard organisateur :
+
+1. Se connecter avec un compte organisateur.
+2. Ouvrir `/organizer`.
+3. Sélectionner l’événement cible dans le menu `Événement cible`.
+4. Remplir le formulaire du module souhaité.
+5. Cliquer sur `Créer / enregistrer`.
+6. Lire la réponse JSON affichée sous la carte pour récupérer l’ID, la clé, le statut ou l’objet créé.
+
+Les champs de type liste acceptent soit une seule valeur (`scan`), soit plusieurs valeurs séparées par virgules (`scan,sell,refund`). Le frontend envoie toujours une vraie liste JSON au backend.
+
 Package backend :
 
 ```txt
@@ -307,6 +318,8 @@ POST /api/promo-codes
 GET  /api/events/{eventId}/promo-codes
 POST /api/promo-codes/redeem
 ```
+
+Un code de type `PROMO` peut être saisi par le participant dans le formulaire d’achat de ticket. Le backend valide le code, vérifie qu’il est actif/non expiré et que sa limite d’utilisation n’est pas atteinte, puis applique `discountPercent` ou `discountAmount` avant de créer le paiement. Les codes de type `ACCESS` restent des codes d’accès privés et ne sont pas traités comme des remises.
 
 ### 4.5 Waitlist
 

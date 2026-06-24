@@ -17,6 +17,8 @@ public class SchemaMigration {
             jdbc.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS organizer_payout_method VARCHAR(255)");
             jdbc.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS organizer_payout_account_ref VARCHAR(1200)");
             jdbc.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payout_status VARCHAR(255)");
+            jdbc.execute("ALTER TABLE reservations ADD COLUMN IF NOT EXISTS promo_code VARCHAR(255)");
+            jdbc.execute("ALTER TABLE reservations ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(38,2)");
         };
     }
 }

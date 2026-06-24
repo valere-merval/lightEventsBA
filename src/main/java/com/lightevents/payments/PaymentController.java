@@ -69,6 +69,7 @@ public class PaymentController {
     @PostMapping({"/mobile-money/initiate", "/checkout"})
     public CheckoutResponse initiate(@RequestBody InitiatePaymentRequest r) {
         BigDecimal gross = r.amount();
+        if (!blank(r.reservationReference())) gross = events.reservationByReference(r.reservationReference()).getGrossAmount();
         BigDecimal fee = gross.multiply(new BigDecimal("0.045")).setScale(2, RoundingMode.HALF_UP);
         Transaction t = new Transaction();
         t.setEventId(r.eventId());

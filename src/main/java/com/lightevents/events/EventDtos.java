@@ -10,7 +10,7 @@ public final class EventDtos {
     public record CreateTicketRequest(@NotBlank String name, String description, TicketKind kind, @DecimalMin("0.00") BigDecimal price, String currency, @Min(1) int quantity) {}
     public record RegisterAttendeeRequest(@NotBlank String fullName, @Email String email, String phone, String company, String roleTitle, @NotNull Long ticketTypeId) {}
     public record TicketHolder(String fullName, @Email String email, String phone, String whatsapp, String countryOfResidence) {}
-    public record ReserveTicketsRequest(@NotBlank String buyerName, @Email String buyerEmail, String buyerPhone, String buyerWhatsapp, boolean companyPurchase, String companyName, String deliveryPreference, @NotNull Long ticketTypeId, @Min(1) int quantity, List<TicketHolder> holders, Boolean payNow) {}
+    public record ReserveTicketsRequest(@NotBlank String buyerName, @Email String buyerEmail, String buyerPhone, String buyerWhatsapp, boolean companyPurchase, String companyName, String deliveryPreference, @NotNull Long ticketTypeId, @Min(1) int quantity, List<TicketHolder> holders, Boolean payNow, String promoCode) {}
     public record ConfirmReservationPaymentRequest(@NotBlank String paymentReference) {}
     public record ContactOrganizerRequest(@NotBlank String fullName, @Email String email, String phone, String whatsapp, String countryOfResidence, String message) {}
     public record TicketLookupRequest(String channel, String destination, @Email String email) {}
