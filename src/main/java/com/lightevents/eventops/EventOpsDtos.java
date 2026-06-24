@@ -8,6 +8,8 @@ import java.util.List;
 public final class EventOpsDtos {
     private EventOpsDtos() {}
     public record OrganizerApplicationRequest(Long organizerAccountId, @NotBlank String businessName, @Email String contactEmail, String websiteUrl, String description) {}
+    public record BoxOfficeLinkRequest(String deviceName, Integer expiresInHours) {}
+    public record DoorSaleRequest(String buyerName, @Email String buyerEmail, String buyerPhone, @NotNull Long ticketTypeId, @Min(1) Integer quantity, String paymentMethod) {}
     public record BoxOfficeSaleRequest(@NotNull Long eventId, @NotNull Long ticketTypeId, Long cashierAccountId, String buyerName, @Email String buyerEmail, String buyerPhone, @Min(1) int quantity, BigDecimal unitPrice, String currency, String paymentMethod) {}
     public record SeatMapRequest(@NotNull Long eventId, @NotBlank String name, String venueName, String layoutJson, Boolean active) {}
     public record SeatRequest(@NotNull Long eventId, @NotNull Long seatMapId, String sectionName, String rowLabel, Integer seatNumber, @NotBlank String seatLabel) {}

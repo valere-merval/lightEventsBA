@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,9 +24,11 @@ public class EventOpsService {
     public List<OrganizerApplication> organizerApplications(Long organizerAccountId){ return organizerAccountId==null?apps.findAll():apps.findByOrganizerAccountId(organizerAccountId); }
     public OrganizerApplication createOrganizerApplication(EventOpsDtos.OrganizerApplicationRequest r){ OrganizerApplication a=new OrganizerApplication(); a.setOrganizerAccountId(r.organizerAccountId()); a.setBusinessName(r.businessName()); a.setContactEmail(r.contactEmail()); a.setWebsiteUrl(r.websiteUrl()); a.setDescription(r.description()); return apps.save(a); }
     @Transactional public OrganizerApplication setOrganizerApplicationEnabled(Long id, boolean enabled){ OrganizerApplication a=apps.findById(id).orElseThrow(()->notFound("Organizer application not found")); a.setEnabled(enabled); return apps.save(a); }
+    public Map<String,Object> createBoxOfficeLink(Long eventId, EventOpsDtos.BoxOfficeLinkRequest r){ Event event=requireEvent(eventId); OrganizerApplication a=new OrganizerApplication(); a.setBusinessName(blank(r.deviceName())?"Box-office " + event.getTitle():r.deviceName()); a.setContactEmail(event.getOrganizerEmail()); a.setWebsiteUrl("/organizer?eventId="+eventId); a.setDescription("Lien mobile box-office/check-in pour " + event.getTitle() + ". Expire dans " + (r.expiresInHours()==null?24:r.expiresInHours()) + "h."); a=apps.save(a); return Map.of("eventId", eventId, "deviceName", a.getBusinessName(), "apiKey", a.getApiKey(), "mobilePath", "/organizer?eventId="+eventId+"&boxOfficeKey="+a.getApiKey(), "expiresInHours", r.expiresInHours()==null?24:r.expiresInHours()); }
 
     public List<BoxOfficeSale> boxOfficeSales(Long eventId){ return eventId==null?boxOffice.findAll():boxOffice.findByEventId(eventId); }
     @Transactional public BoxOfficeSale recordBoxOfficeSale(EventOpsDtos.BoxOfficeSaleRequest r){ Event event=requireEvent(r.eventId()); TicketType ticket=tickets.findById(r.ticketTypeId()).orElseThrow(()->notFound("Ticket type not found")); if(ticket.getEvent()!=null&&!ticket.getEvent().getId().equals(event.getId())) throw new ApiException(HttpStatus.BAD_REQUEST,"Ticket does not belong to event"); int qty=Math.max(1,r.quantity()); if(ticket.getSold()+qty>ticket.getQuantity()) throw new ApiException(HttpStatus.CONFLICT,"Not enough tickets available"); BigDecimal unit=r.unitPrice()!=null?r.unitPrice():safe(ticket.getPrice()); BoxOfficeSale sale=new BoxOfficeSale(); sale.setEventId(event.getId()); sale.setTicketTypeId(ticket.getId()); sale.setCashierAccountId(r.cashierAccountId()); sale.setBuyerName(r.buyerName()); sale.setBuyerEmail(r.buyerEmail()); sale.setBuyerPhone(r.buyerPhone()); sale.setQuantity(qty); sale.setUnitPrice(unit); sale.setTotalAmount(unit.multiply(BigDecimal.valueOf(qty))); sale.setCurrency(blank(r.currency())?ticket.getCurrency():r.currency()); sale.setPaymentMethod(blank(r.paymentMethod())?"CASH":r.paymentMethod()); ticket.setSold(ticket.getSold()+qty); tickets.save(ticket); return boxOffice.save(sale); }
+    @Transactional public BoxOfficeSale recordDoorSale(Long eventId, EventOpsDtos.DoorSaleRequest r){ return recordBoxOfficeSale(new EventOpsDtos.BoxOfficeSaleRequest(eventId, r.ticketTypeId(), null, r.buyerName(), r.buyerEmail(), r.buyerPhone(), r.quantity()==null?1:r.quantity(), null, null, r.paymentMethod())); }
 
     public List<SeatMap> seatMaps(Long eventId){ return seatMaps.findByEventId(eventId); }
     public EventOpsDtos.SeatMapView seatMapView(Long seatMapId){ SeatMap m=seatMaps.findById(seatMapId).orElseThrow(()->notFound("Seat map not found")); return new EventOpsDtos.SeatMapView(m,seats.findBySeatMapId(seatMapId)); }

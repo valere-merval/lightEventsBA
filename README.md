@@ -2,18 +2,24 @@
 
 Spring Boot / Java 25 backend for **LightEvents**.
 
+## Documentation
+
+La documentation fonctionnelle complète est disponible ici : [`docs/LIGHTEVENTS_GUIDE_FR.md`](docs/LIGHTEVENTS_GUIDE_FR.md).
+
 ## V2 capabilities
 
 - Verified account registration by email/SMS/WhatsApp code before event publishing
 - Organizer payout preferences and 4.5% platform fee calculation
 - Events with categories, location, payment methods, preview-ready media fields
 - Multi-ticket reservations with per-ticket holder details
+- Ticket QR code delivery by email with PNG attachment
 - QR check-in endpoint, rejects a second scan
 - Ticket lookup by email + verification code
 - S3-compatible presigned upload placeholder
 - AI image generation placeholder endpoint
 - Support FAQ/chatbot endpoint with WhatsApp handoff metadata
 - API integration docs endpoint
+- EventOps modules: box-office, seating, promos, waitlist, refunds, teams, custom forms, marketing and webhooks
 
 ## Run
 

@@ -3,6 +3,7 @@ package com.lightevents.eventops;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController @RequestMapping("/api")
 public class EventOpsController {
@@ -12,9 +13,11 @@ public class EventOpsController {
     @GetMapping("/organizer/apps") public List<OrganizerApplication> organizerApps(@RequestParam(required=false) Long organizerAccountId){ return service.organizerApplications(organizerAccountId); }
     @PostMapping("/organizer/apps") public OrganizerApplication createOrganizerApp(@Valid @RequestBody EventOpsDtos.OrganizerApplicationRequest r){ return service.createOrganizerApplication(r); }
     @PostMapping("/organizer/apps/{id}/enabled") public OrganizerApplication setOrganizerAppEnabled(@PathVariable Long id, @RequestParam boolean enabled){ return service.setOrganizerApplicationEnabled(id, enabled); }
+    @PostMapping("/organizer/events/{eventId}/box-office-link") public Map<String,Object> createBoxOfficeLink(@PathVariable Long eventId, @RequestBody EventOpsDtos.BoxOfficeLinkRequest r){ return service.createBoxOfficeLink(eventId, r); }
 
     @GetMapping("/box-office/sales") public List<BoxOfficeSale> boxOfficeSales(@RequestParam(required=false) Long eventId){ return service.boxOfficeSales(eventId); }
     @PostMapping("/box-office/sales") public BoxOfficeSale recordBoxOfficeSale(@Valid @RequestBody EventOpsDtos.BoxOfficeSaleRequest r){ return service.recordBoxOfficeSale(r); }
+    @PostMapping("/organizer/events/{eventId}/door-sales") public BoxOfficeSale recordDoorSale(@PathVariable Long eventId, @Valid @RequestBody EventOpsDtos.DoorSaleRequest r){ return service.recordDoorSale(eventId, r); }
 
     @GetMapping("/events/{eventId}/seat-maps") public List<SeatMap> seatMaps(@PathVariable Long eventId){ return service.seatMaps(eventId); }
     @GetMapping("/seat-maps/{seatMapId}") public EventOpsDtos.SeatMapView seatMap(@PathVariable Long seatMapId){ return service.seatMapView(seatMapId); }
