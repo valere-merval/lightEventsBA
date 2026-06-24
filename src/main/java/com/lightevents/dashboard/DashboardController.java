@@ -5,6 +5,7 @@ import com.lightevents.auth.AccountService;
 import com.lightevents.events.*;
 import com.lightevents.payments.TransactionRepository;
 import com.lightevents.profiles.UserProfileRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.*;
@@ -43,6 +44,7 @@ public class DashboardController {
     }
 
     @GetMapping("/organizer")
+    @Transactional(readOnly = true)
     public Map<String, Object> organizer(
             @RequestHeader(value = "X-LightEvents-Token", required = false) String token,
             @RequestParam(required = false) String email

@@ -28,7 +28,10 @@ public class AccountService {
         }
 
         String email = normalizeEmail(r.email());
-        Account a = accounts.findByEmailIgnoreCase(email).orElseGet(Account::new);
+        if (accounts.findByEmailIgnoreCase(email).isPresent()) {
+            throw new ApiException(HttpStatus.CONFLICT, "Cette adresse email est déjà utilisée. Connectez-vous avec un code email au lieu de créer un nouveau compte.");
+        }
+        Account a = new Account();
         a.setFullName(r.fullName());
         a.setEmail(email);
         a.setPhone(blank(r.phone()) ? null : r.phone());
