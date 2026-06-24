@@ -4,7 +4,7 @@ Dernière mise à jour : 2026-06-24
 
 ## 1. Vision générale
 
-LightEvents est une plateforme de billetterie et d’organisation d’événements inspirée d’Eventbrite, mais pensée pour l’Afrique, la diaspora, WordPress, WhatsApp, Mobile Money et les PME.
+LightEvents est une plateforme de billetterie et d’organisation d’événements pensée pour l’Afrique, la diaspora, WordPress, WhatsApp, Mobile Money et les PME.
 
 La plateforme est composée de quatre projets :
 
@@ -43,12 +43,12 @@ Un organisateur connecté et vérifié peut créer un événement depuis `/creat
 
 Un événement contient notamment :
 
-- titre, description, catégorie ;
+- titre, description, une ou plusieurs catégories ;
 - lieu physique ou lien online ;
 - date de début/fin ;
 - capacité ;
 - image principale, galerie, vidéo ;
-- options de billets ;
+- options de billets multiples avec nom, description, prix, devise, quantité et disponibilité ;
 - période de réservation sans paiement immédiat ;
 - mode de reversement organisateur.
 
@@ -58,6 +58,20 @@ Endpoint :
 POST /api/events
 Header: X-LightEvents-Token: <apiToken>
 ```
+
+Catégories :
+
+- le champ historique `category` garde la catégorie principale ;
+- le champ `categories` accepte une liste de catégories ;
+- l’événement est trouvé dans `/api/events?category=...` si la catégorie cherchée correspond à l’une des catégories sélectionnées ;
+- le frontend affiche toutes les catégories sélectionnées pour éviter qu’un événement multi-thème soit présenté comme mono-catégorie.
+
+Prix et options :
+
+- un événement peut avoir plusieurs options : Standard, VIP, Business, Early Bird, Gratuit, etc. ;
+- les listes et highlights affichent un résumé de prix basé sur toutes les options ;
+- la page détail affiche toutes les options avec prix, description et places restantes ;
+- le formulaire d’achat/réservation laisse le participant choisir l’option précise.
 
 ### 2.3 Réservation de tickets
 
@@ -124,6 +138,47 @@ Body: { "qrCode": "..." }
 ```
 
 Il existe aussi un champ manuel dans l’app mobile pour coller le code QR brut si la caméra ne fonctionne pas.
+
+
+## 2.6 Ce qu’un organisateur peut faire
+
+Un organisateur peut :
+
+- créer un compte organisateur et le vérifier par code email ;
+- publier un événement physique ou en ligne ;
+- choisir plusieurs catégories pour améliorer la découverte ;
+- renseigner lieu, salle, adresse exacte, dates, capacité, médias, galerie et vidéo ;
+- générer ou uploader une image principale ;
+- créer plusieurs options de billets avec prix, devise, quota et description ;
+- définir la durée de validité d’une réservation sans paiement immédiat ;
+- définir jusqu’à quand les réservations sans paiement sont acceptées ;
+- choisir comment recevoir l’argent : PayPal ou références bancaires ;
+- consulter son dashboard organisateur ;
+- voir participants, réservations, statuts et pays des participants ;
+- scanner les QR Codes avec l’app LightEvents Organizer ;
+- saisir manuellement un QR Code si la caméra ne fonctionne pas ;
+- vendre à l’entrée via le box-office ;
+- utiliser les modules avancés : box-office mobile, vente à l’entrée, plan de salle, codes promo, liste d’attente, remboursements, équipe/rôles, formulaires personnalisés, campagnes marketing/tracking et webhooks développeur ;
+- intégrer ses événements sur WordPress via shortcodes ;
+- suivre les paiements et confirmations liés aux réservations.
+
+## 2.7 Ce qu’un participant peut faire
+
+Un participant peut :
+
+- découvrir les événements depuis l’accueil, la liste, les pays, villes et catégories ;
+- trouver un événement via n’importe quelle catégorie sélectionnée par l’organisateur ;
+- ouvrir la page détail pour voir description, lieu, date, médias, paiements acceptés et toutes les options de prix ;
+- choisir une option de billet spécifique ;
+- réserver sans payer immédiatement si l’organisateur l’autorise encore ;
+- payer directement par Orange Money, MTN MoMo, Wave, Airtel Money, Moov Money, Stripe ou PayPal ;
+- renseigner les informations de chaque détenteur de ticket ;
+- acheter pour une entreprise et renseigner un nom de société ;
+- recevoir ses tickets QR par email, avec statut et référence ;
+- consulter ses tickets, achats et factures via un code envoyé à son email/téléphone/WhatsApp ;
+- présenter son QR Code à l’entrée ;
+- contacter l’organisateur depuis la page détail ;
+- utiliser le chatbot pour poser des questions sur événements, lieux, prix, paiements et tickets.
 
 ## 3. Paiements : état actuel
 
@@ -206,7 +261,7 @@ Important : les IDs de services GetMiPay peuvent dépendre du compte marchand et
 
 ## 4. Modules EventOps ajoutés
 
-Les modules EventOps couvrent les fonctionnalités avancées type Eventbrite.
+Les modules EventOps couvrent les fonctionnalités avancées nécessaires aux organisateurs professionnels.
 
 Package backend :
 

@@ -19,6 +19,7 @@ public class Event {
     @Column(length = 4000) private String description;
     private String coverImageUrl;
     private String category;
+    @Column(length = 1000) private String categories;
     private String city;
     private String country;
     private String venueName;
@@ -64,6 +65,8 @@ public class Event {
     public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getCategories() { return categories; }
+    public void setCategories(String categories) { this.categories = categories; }
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
     public String getCountry() { return country; }

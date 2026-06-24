@@ -10,8 +10,9 @@ La documentation fonctionnelle complète est disponible ici : [`docs/LIGHTEVENTS
 
 - Verified account registration by email/SMS/WhatsApp code before event publishing
 - Organizer payout preferences and 4.5% platform fee calculation
-- Events with categories, location, payment methods, preview-ready media fields
-- Multi-ticket reservations with per-ticket holder details
+- Events with multiple categories, location, payment methods, preview-ready media fields
+- Category search matches any selected event category
+- Multi-ticket reservations with per-ticket holder details and multiple priced/free ticket options
 - Ticket QR code delivery by email with PNG attachment
 - QR check-in endpoint, rejects a second scan
 - Ticket lookup by email + verification code

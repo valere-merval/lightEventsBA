@@ -12,7 +12,7 @@
 	<artifactId>lightevents-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>LightEvents Backend</name>
-	<description>Eventbrite LinkedIn WhatsApp Mobile Money platform</description>
+	<description>LightEvents LinkedIn WhatsApp Mobile Money platform</description>
 	<url/>
 	<licenses>
 		<license/>
