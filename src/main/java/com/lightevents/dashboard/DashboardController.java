@@ -47,7 +47,8 @@ public class DashboardController {
     @Transactional(readOnly = true)
     public Map<String, Object> organizer(
             @RequestHeader(value = "X-LightEvents-Token", required = false) String token,
-            @RequestParam(required = false) String email
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String name
     ) {
         Account account = null;
         if (!blank(token)) {
@@ -55,18 +56,19 @@ public class DashboardController {
         }
         Account connected = account;
         List<Event> own = events.findAll().stream()
-                .filter(e -> belongsToOrganizer(e, connected, email))
+                .filter(e -> belongsToOrganizer(e, connected, email, name))
                 .toList();
         List<Map<String, Object>> list = own.stream().map(this::eventRow).toList();
         return Map.of("events", list, "platformFeePercent", 4.5);
     }
 
-    private boolean belongsToOrganizer(Event event, Account account, String email) {
+    private boolean belongsToOrganizer(Event event, Account account, String email, String name) {
         if (account != null) {
             return (event.getOrganizerAccount() != null && Objects.equals(event.getOrganizerAccount().getId(), account.getId()))
-                    || same(account.getEmail(), event.getOrganizerEmail());
+                    || same(account.getEmail(), event.getOrganizerEmail())
+                    || same(account.getFullName(), event.getOrganizerName());
         }
-        return blank(email) || same(email, event.getOrganizerEmail());
+        return (blank(email) && blank(name)) || same(email, event.getOrganizerEmail()) || same(name, event.getOrganizerName());
     }
 
     private Map<String, Object> eventRow(Event e) {
