@@ -495,3 +495,11 @@ LightEvents a maintenant les briques fonctionnelles MVP, mais il faut encore dur
 - Chaque ticket a un QR unique.
 - Chaque QR peut être scanné une seule fois.
 - Les paiements sont préparés, mais doivent encore être finalisés proprement avant production.
+
+## Paiement, tickets et reversements — durcissement production
+
+- Lors d'un paiement direct, LightEvents crée une réservation `PAYMENT_PENDING`, mais le ticket QR n'est envoyé qu'après confirmation du paiement par le provider.
+- Si le paiement échoue ou expire, la réservation est annulée, les places sont libérées et les participants temporaires passent en `CANCELLED`.
+- Si le paiement réussit, la réservation passe en `PAID`, les participants passent en `PAID`, la facture est créée et les tickets QR sont envoyés.
+- Chaque transaction calcule automatiquement 4,5 % pour LightEvents et 95,5 % net organisateur, en conservant le moyen de reversement choisi par l'organisateur lors de la création de l'événement.
+- Le dashboard organisateur permet d'exporter la liste CSV complète des participants avec coordonnées, statut, QR code, référence de réservation et horodatages de check-in.

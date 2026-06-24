@@ -47,6 +47,9 @@ public class Event {
     private java.time.LocalDateTime reservationFreeUntil;
     private Integer reservationHoldDays = 2;
     @Column(length = 1000) private String publishChannels;
+    private String payoutMethod;
+    @Column(length = 1200) private String payoutAccountRef;
+    private String payoutSchedule = "AFTER_EVENT";
     @ManyToOne(fetch = FetchType.LAZY) @JsonIgnore private Account organizerAccount;
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
@@ -114,5 +117,8 @@ public class Event {
     public java.time.LocalDateTime getReservationFreeUntil(){return reservationFreeUntil;} public void setReservationFreeUntil(java.time.LocalDateTime v){reservationFreeUntil=v;}
     public Integer getReservationHoldDays(){return reservationHoldDays;} public void setReservationHoldDays(Integer v){reservationHoldDays=v;}
     public String getPublishChannels(){return publishChannels;} public void setPublishChannels(String v){publishChannels=v;}
+    public String getPayoutMethod(){return payoutMethod;} public void setPayoutMethod(String v){payoutMethod=v;}
+    public String getPayoutAccountRef(){return payoutAccountRef;} public void setPayoutAccountRef(String v){payoutAccountRef=v;}
+    public String getPayoutSchedule(){return payoutSchedule;} public void setPayoutSchedule(String v){payoutSchedule=v;}
     public Account getOrganizerAccount(){return organizerAccount;} public void setOrganizerAccount(Account v){organizerAccount=v;}
 }

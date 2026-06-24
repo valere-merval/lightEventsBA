@@ -80,6 +80,14 @@ public class PaymentController {
         t.setOrganizerNet(gross.subtract(fee));
         t.setCurrency(r.currency() == null ? "XOF" : r.currency());
         t.setPayerPhone(r.payerPhone());
+        try {
+            var event = events.get(r.eventId());
+            t.setOrganizerPayoutMethod(blank(event.getPayoutMethod()) ? "PAYPAL" : event.getPayoutMethod());
+            t.setOrganizerPayoutAccountRef(event.getPayoutAccountRef());
+            t.setPayoutStatus("PENDING");
+        } catch (Exception ignored) {
+            t.setPayoutStatus("PENDING");
+        }
         t.setStatus(PaymentStatus.PENDING);
         t = repo.save(t);
 
@@ -96,12 +104,9 @@ public class PaymentController {
             Map<String, Object> providerStatus = getMiPayStatus(t.getProviderReference());
             String status = providerDataString(providerStatus, "status");
             if ("success".equalsIgnoreCase(status)) {
-                t.setStatus(PaymentStatus.SUCCEEDED);
-                repo.save(t);
-                if (!blank(t.getReservationReference())) events.confirmPayment(t.getReservationReference(), t.getReference());
+                markSucceeded(t);
             } else if ("failed".equalsIgnoreCase(status) || "timeout".equalsIgnoreCase(status)) {
-                t.setStatus(PaymentStatus.FAILED);
-                repo.save(t);
+                markFailed(t);
             }
             return Map.of("transaction", t, "provider", providerStatus);
         }
@@ -111,10 +116,9 @@ public class PaymentController {
     @PostMapping("/confirm")
     public Map<String, Object> confirm(@RequestBody ConfirmPaymentRequest r) {
         Transaction t = repo.findByReference(r.transactionReference()).orElseThrow();
-        t.setStatus(PaymentStatus.SUCCEEDED);
         t.setProviderReference(r.providerReference());
-        repo.save(t);
-        if (r.reservationReference() != null && !r.reservationReference().isBlank()) events.confirmPayment(r.reservationReference(), t.getReference());
+        if (blank(t.getReservationReference()) && !blank(r.reservationReference())) t.setReservationReference(r.reservationReference());
+        markSucceeded(t);
         return Map.of("paid", true, "transaction", t);
     }
 
@@ -127,12 +131,9 @@ public class PaymentController {
                 .findFirst()
                 .ifPresent(t -> {
                     if ("success".equalsIgnoreCase(status)) {
-                        t.setStatus(PaymentStatus.SUCCEEDED);
-                        repo.save(t);
-                        if (!blank(t.getReservationReference())) events.confirmPayment(t.getReservationReference(), t.getReference());
+                        markSucceeded(t);
                     } else if ("failed".equalsIgnoreCase(status) || "timeout".equalsIgnoreCase(status)) {
-                        t.setStatus(PaymentStatus.FAILED);
-                        repo.save(t);
+                        markFailed(t);
                     }
                 });
         return Map.of("received", true);
@@ -182,7 +183,7 @@ public class PaymentController {
             String paymentUrl = providerDataString(res, "payment_url");
             return blank(paymentUrl) ? frontendUrl + "/tickets?getmipay=" + enc(safe(reference, t.getReference())) : paymentUrl;
         } catch (Exception e) {
-            t.setStatus(PaymentStatus.FAILED);
+            markFailed(t);
             return frontendUrl + "/tickets?getmipayError=" + enc(t.getProvider().name());
         }
     }
@@ -238,6 +239,9 @@ public class PaymentController {
             return frontendUrl + "/tickets?paypalPreview=true";
         }
     }
+
+    private void markSucceeded(Transaction t) { t.setStatus(PaymentStatus.SUCCEEDED); t.setPayoutStatus("READY_FOR_AUTOMATIC_PAYOUT"); repo.save(t); if (!blank(t.getReservationReference())) events.confirmPayment(t.getReservationReference(), t.getReference()); }
+    private void markFailed(Transaction t) { t.setStatus(PaymentStatus.FAILED); t.setPayoutStatus("CANCELLED"); repo.save(t); if (!blank(t.getReservationReference())) events.failPayment(t.getReservationReference(), t.getReference()); }
 
     private boolean hasGetMiPayCredentials() { return !blank(getMiPayPublicKey) && !blank(getMiPayPrivateKey); }
     private static boolean isGetMiPay(PaymentProvider provider) { return provider == PaymentProvider.ORANGE_MONEY || provider == PaymentProvider.MTN_MONEY || provider == PaymentProvider.WAVE || provider == PaymentProvider.AIRTEL_MONEY || provider == PaymentProvider.MOOV_MONEY; }

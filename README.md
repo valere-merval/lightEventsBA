@@ -51,3 +51,10 @@ La documentation fonctionnelle complète est disponible ici : [`docs/LIGHTEVENTS
 - `POST /api/media/presign`
 - `POST /api/media/ai-image`
 - `POST /api/support/chatbot`
+
+## Production payment and organizer export updates
+
+- Paid reservations now generate/send QR tickets only after payment succeeds.
+- Failed or timed-out payments cancel the pending reservation, release the ticket quantity, and mark temporary attendees as cancelled.
+- Each payment calculates the LightEvents 4.5% platform fee and the organizer net amount, with organizer payout method/reference stored from event creation.
+- Organizer dashboards expose a CSV participant export with attendee identity, contact, status, QR code, reservation reference, and check-in timestamps.

@@ -5,6 +5,8 @@ import com.lightevents.auth.AccountService;
 import com.lightevents.events.*;
 import com.lightevents.payments.TransactionRepository;
 import com.lightevents.profiles.UserProfileRepository;
+import com.lightevents.shared.ApiException;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,6 +64,33 @@ public class DashboardController {
         return Map.of("events", list, "platformFeePercent", 4.5);
     }
 
+    @GetMapping(value = "/organizer/events/{eventId}/participants.csv", produces = "text/csv")
+    @Transactional(readOnly = true)
+    public String exportParticipants(
+            @RequestHeader(value = "X-LightEvents-Token", required = false) String token,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String name,
+            @PathVariable Long eventId
+    ) {
+        Account account = blank(token) ? null : accounts.requireAccount(token);
+        Event event = events.findById(eventId).orElseThrow();
+        if (!belongsToOrganizer(event, account, email, name)) throw new ApiException(HttpStatus.FORBIDDEN, "Unauthorized organizer export");
+        StringBuilder csv = new StringBuilder("id,fullName,email,phone,company,roleTitle,country,status,reservationReference,qrCode,registeredAt,checkedInAt\n");
+        attendees.findByEventId(eventId).forEach(a -> csv.append(a.getId()).append(',')
+                .append(csv(a.getFullName())).append(',')
+                .append(csv(a.getEmail())).append(',')
+                .append(csv(a.getPhone())).append(',')
+                .append(csv(a.getCompany())).append(',')
+                .append(csv(a.getRoleTitle())).append(',')
+                .append(csv(a.getCountryOfResidence())).append(',')
+                .append(a.getStatus()).append(',')
+                .append(csv(a.getReservationReference())).append(',')
+                .append(csv(a.getQrCode())).append(',')
+                .append(a.getRegisteredAt()).append(',')
+                .append(a.getCheckedInAt()).append('\n'));
+        return csv.toString();
+    }
+
     private boolean belongsToOrganizer(Event event, Account account, String email, String name) {
         if (account != null) {
             return (event.getOrganizerAccount() != null && Objects.equals(event.getOrganizerAccount().getId(), account.getId()))
@@ -89,4 +118,5 @@ public class DashboardController {
 
     private static boolean same(String a, String b) { return a != null && b != null && a.equalsIgnoreCase(b); }
     private static boolean blank(String v) { return v == null || v.isBlank(); }
+    private static String csv(String v) { return v == null ? "" : "\"" + v.replace("\"", "\"\"") + "\""; }
 }
