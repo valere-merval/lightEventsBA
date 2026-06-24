@@ -98,6 +98,10 @@ public class AccountService {
         return a;
     }
 
+    public Account requireAccount(String token) {
+        return accountFromToken(token);
+    }
+
     private Account accountFromToken(String token) {
         if (token == null || token.isBlank()) throw new ApiException(HttpStatus.UNAUTHORIZED, "Login required");
         return accounts.findByApiToken(token.replace("Bearer ", ""))

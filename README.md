@@ -20,6 +20,7 @@ La documentation fonctionnelle complète est disponible ici : [`docs/LIGHTEVENTS
 - Support FAQ/chatbot endpoint with WhatsApp handoff metadata
 - API integration docs endpoint
 - EventOps modules: box-office, seating, promos, waitlist, refunds, teams, custom forms, marketing and webhooks
+- GetMiPay Mobile Money PayIn integration for Orange Money, MTN Money, Wave, Airtel Money and Moov Money
 
 ## Run
 
@@ -42,6 +43,10 @@ La documentation fonctionnelle complète est disponible ici : [`docs/LIGHTEVENTS
 - `POST /api/events/{id}/reservations`
 - `POST /api/events/check-in`
 - `POST /api/events/tickets/lookup/request-code`
+- `POST /api/payments/checkout`
+- `GET /api/payments/{reference}/status`
+- `GET /api/payments/mobile-money/services`
+- `POST /api/payments/getmipay/webhook`
 - `POST /api/media/presign`
 - `POST /api/media/ai-image`
 - `POST /api/support/chatbot`

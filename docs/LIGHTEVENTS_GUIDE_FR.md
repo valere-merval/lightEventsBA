@@ -127,35 +127,82 @@ Il existe aussi un champ manuel dans l’app mobile pour coller le code QR brut 
 
 ## 3. Paiements : état actuel
 
-Les paiements ne sont pas encore à considérer comme une intégration production complète.
+LightEvents intègre maintenant un premier connecteur Mobile Money via GetMiPay, en plus des connecteurs Stripe/PayPal déjà préparés.
 
-Actuellement, le backend prépare :
+Le backend prépare toujours :
 
 - transaction ;
 - frais plateforme 4,5 % ;
 - montant net organisateur ;
-- checkout Stripe si clé configurée ;
-- checkout PayPal si clés configurées ;
-- fallback preview si les clés ne sont pas configurées.
+- référence interne LightEvents ;
+- référence fournisseur quand GetMiPay/Stripe/PayPal en retourne une.
 
-Endpoints :
+### 3.1 Moyens de paiement supportés
+
+```txt
+ORANGE_MONEY
+MTN_MONEY
+WAVE
+AIRTEL_MONEY
+MOOV_MONEY
+STRIPE
+PAYPAL
+```
+
+### 3.2 Paiement GetMiPay / Mobile Money
+
+Flux technique :
+
+1. Le participant réserve avec `payNow=true`.
+2. LightEvents crée la réservation et les tickets QR.
+3. Le frontend ou WordPress appelle `POST /api/payments/checkout`.
+4. Le backend authentifie GetMiPay via `POST /action/auth`.
+5. Le backend appelle GetMiPay `POST /payments/payin` avec :
+   - header `Authorization: Bearer <jwt>` ;
+   - header `operation: 2` ;
+   - header `service: <serviceId>` ;
+   - header `otp` si Orange Money le demande ;
+   - body `amount`, `currency`, `wallet`, `description`, `customer_name`, `customer_email`, `callback_url`.
+6. Le participant valide sur son téléphone / wallet.
+7. LightEvents vérifie le statut via `GET /api/payments/{reference}/status` ou reçoit le webhook `/api/payments/getmipay/webhook`.
+8. Si GetMiPay répond `success`, LightEvents marque la transaction `SUCCEEDED`, confirme la réservation et remet les tickets en statut payé.
+
+Endpoints LightEvents :
 
 ```txt
 POST /api/payments/checkout
+POST /api/payments/mobile-money/initiate
+GET  /api/payments/{reference}/status
+GET  /api/payments/mobile-money/services
+POST /api/payments/getmipay/webhook
 POST /api/payments/confirm
 POST /api/events/reservations/{reference}/confirm-payment
 ```
 
-Avant de renforcer les paiements, LightEvents garantit maintenant que les tickets possèdent un QR Code et que l’app mobile peut scanner ce QR.
+Configuration backend :
 
-À faire pour production :
+```properties
+GETMIPAY_BASE_URL=https://sandbox.getmipay.com/api
+GETMIPAY_PUBLIC_API_KEY=...
+GETMIPAY_PRIVATE_SECRET_KEY=...
+GETMIPAY_CALLBACK_URL=https://api.votre-domaine.com/api/payments/getmipay/webhook
+GETMIPAY_SERVICE_ORANGE_MONEY=3
+GETMIPAY_SERVICE_MTN_MONEY=1
+GETMIPAY_SERVICE_WAVE=...
+GETMIPAY_SERVICE_AIRTEL_MONEY=...
+GETMIPAY_SERVICE_MOOV_MONEY=...
+```
 
-- webhooks Stripe/PayPal réels ;
-- Mobile Money réel Orange/MTN/Wave/Airtel/Moov ;
-- statut paiement fiable ;
-- retry email ;
-- reçu/facture systématique ;
-- règles de remboursement automatisées.
+Important : les IDs de services GetMiPay peuvent dépendre du compte marchand et du pays. Après configuration des clés, utilisez `GET /api/payments/mobile-money/services` pour récupérer les services réellement activés sur le compte marchand.
+
+### 3.3 Ce qui reste à durcir avant production paiement
+
+- valider les vrais IDs de services GetMiPay par pays ;
+- sécuriser/signaturer les webhooks si GetMiPay fournit une signature ;
+- ajouter un écran de suivi paiement après redirection ;
+- ajouter retry/polling automatique côté frontend ;
+- gérer remboursements Mobile Money ;
+- ajouter logs/audit paiement complets.
 
 ## 4. Modules EventOps ajoutés
 
@@ -272,7 +319,7 @@ Le frontend contient les pages principales :
 | `/admin` | Supervision admin |
 | `/help` | FAQ/chatbot |
 
-Le hub EventOps du dashboard organisateur expose les 10 modules avancés et appelle les endpoints backend correspondants.
+Le hub EventOps du dashboard organisateur expose les 10 modules avancés et appelle les endpoints backend correspondants. Le dashboard utilise maintenant le token du compte connecté (`X-LightEvents-Token`) pour retrouver les événements liés au compte organisateur, même si l’email saisi dans le formulaire événement diffère de l’email de connexion.
 
 ## 6. App mobile LightEvents Organizer
 
