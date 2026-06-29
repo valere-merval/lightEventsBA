@@ -24,28 +24,36 @@ public class LightEventsBackendApplication {
 
 		if (databaseUrl == null || databaseUrl.isBlank()) return;
 		try {
+			if (databaseUrl.startsWith("jdbc:postgresql://")) {
+				configurePostgresFromUri(databaseUrl.substring("jdbc:".length()), databaseUsername, databasePassword);
+				return;
+			}
 			if (databaseUrl.startsWith("jdbc:postgresql:")) {
 				configurePostgres(databaseUrl, databaseUsername, databasePassword);
 				return;
 			}
 			if (!databaseUrl.startsWith("postgres://") && !databaseUrl.startsWith("postgresql://")) return;
 
-			URI uri = URI.create(databaseUrl);
-			String query = uri.getQuery();
-			String jdbcUrl = "jdbc:postgresql://" + uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "") + uri.getPath() + (query == null || query.isBlank() ? "?sslmode=require" : "?" + query);
-			String userInfo = uri.getUserInfo();
-			if (userInfo != null && !userInfo.isBlank()) {
-				String[] parts = userInfo.split(":", 2);
-				// Render internal database URLs already include the correct DB user/password.
-				// Prefer those credentials over manually-entered env vars so a mistaken
-				// DATABASE_USERNAME value cannot break startup.
-				if (parts.length > 0) databaseUsername = decode(parts[0]);
-				if (parts.length > 1) databasePassword = decode(parts[1]);
-			}
-			configurePostgres(jdbcUrl, databaseUsername, databasePassword);
+			configurePostgresFromUri(databaseUrl, databaseUsername, databasePassword);
 		} catch (Exception ignored) {
 			// Keep application.properties fallback so local/dev environments continue to boot.
 		}
+	}
+
+	private static void configurePostgresFromUri(String postgresUrl, String username, String password) {
+		URI uri = URI.create(postgresUrl);
+		String query = uri.getQuery();
+		String jdbcUrl = "jdbc:postgresql://" + uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "") + uri.getPath() + (query == null || query.isBlank() ? "?sslmode=require" : "?" + query);
+		String userInfo = uri.getUserInfo();
+		if (userInfo != null && !userInfo.isBlank()) {
+			String[] parts = userInfo.split(":", 2);
+			// Render database URLs include the correct DB user/password. Prefer those
+			// credentials over manually-entered env vars so a mistaken DATABASE_USERNAME
+			// value cannot break startup.
+			if (parts.length > 0) username = decode(parts[0]);
+			if (parts.length > 1) password = decode(parts[1]);
+		}
+		configurePostgres(jdbcUrl, username, password);
 	}
 
 	private static void configurePostgres(String jdbcUrl, String username, String password) {
