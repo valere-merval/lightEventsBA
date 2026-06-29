@@ -34,10 +34,13 @@ public class LightEventsBackendApplication {
 			String query = uri.getQuery();
 			String jdbcUrl = "jdbc:postgresql://" + uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "") + uri.getPath() + (query == null || query.isBlank() ? "?sslmode=require" : "?" + query);
 			String userInfo = uri.getUserInfo();
-			if ((databaseUsername == null || databaseUsername.isBlank()) && userInfo != null && !userInfo.isBlank()) {
+			if (userInfo != null && !userInfo.isBlank()) {
 				String[] parts = userInfo.split(":", 2);
+				// Render internal database URLs already include the correct DB user/password.
+				// Prefer those credentials over manually-entered env vars so a mistaken
+				// DATABASE_USERNAME value cannot break startup.
 				if (parts.length > 0) databaseUsername = decode(parts[0]);
-				if ((databasePassword == null || databasePassword.isBlank()) && parts.length > 1) databasePassword = decode(parts[1]);
+				if (parts.length > 1) databasePassword = decode(parts[1]);
 			}
 			configurePostgres(jdbcUrl, databaseUsername, databasePassword);
 		} catch (Exception ignored) {

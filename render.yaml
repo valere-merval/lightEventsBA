@@ -29,6 +29,8 @@ services:
         value: org.hibernate.dialect.PostgreSQLDialect
       - key: SPRING_JPA_DATABASE_PLATFORM
         value: org.hibernate.dialect.PostgreSQLDialect
+      - key: DATABASE_SCHEMA
+        value: public
 
 databases:
   - name: lightevents-db
