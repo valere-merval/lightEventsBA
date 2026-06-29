@@ -25,6 +25,10 @@ services:
           property: password
       - key: DATABASE_DRIVER
         value: org.postgresql.Driver
+      - key: HIBERNATE_DIALECT
+        value: org.hibernate.dialect.PostgreSQLDialect
+      - key: SPRING_JPA_DATABASE_PLATFORM
+        value: org.hibernate.dialect.PostgreSQLDialect
 
 databases:
   - name: lightevents-db
