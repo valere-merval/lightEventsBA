@@ -24,6 +24,23 @@ API LightEvents = https://<votre-service-render>.onrender.com/api
 URL plateforme = https://valere-merval.github.io/lightEventsFE
 ```
 
+## Variables Render obligatoires si le service est créé manuellement
+
+Ne mettez jamais les identifiants PostgreSQL dans `application.properties` ou dans GitHub. Ajoutez-les uniquement dans **Render → Web Service → Environment**.
+
+Pour une base Render PostgreSQL, utilisez l'URL **Internal Database URL** :
+
+```txt
+DATABASE_URL=<Internal Database URL Render>
+DATABASE_DRIVER=org.postgresql.Driver
+JPA_DDL_AUTO=update
+SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+CORS_ALLOWED_ORIGINS=https://valere-merval.github.io,https://valere-merval.github.io/lightEventsFE
+FRONTEND_URL=https://valere-merval.github.io/lightEventsFE
+```
+
+`DATABASE_USERNAME` et `DATABASE_PASSWORD` sont optionnels si `DATABASE_URL` contient déjà `postgresql://user:password@host/db`. Si vous les renseignez séparément, `DATABASE_USERNAME` doit être l'utilisateur PostgreSQL, pas le mot de passe.
+
 ## Variables utiles plus tard
 
 - `STRIPE_SECRET_KEY`
