@@ -17,7 +17,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public AuthDtos.AccountResponse register(@Valid @RequestBody AuthDtos.RegisterRequest r) {
-        return service.response(service.register(r));
+        return service.register(r);
     }
 
     @PostMapping("/verify")

@@ -22,7 +22,7 @@ public class AccountService {
     }
 
     @Transactional
-    public Account register(AuthDtos.RegisterRequest r) {
+    public AuthDtos.AccountResponse register(AuthDtos.RegisterRequest r) {
         if (blank(r.email())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Email is required");
         }
@@ -46,8 +46,8 @@ public class AccountService {
         a.setPhoneVerificationCode(code());
 
         Account saved = accounts.save(a);
-        sendEmailCode(saved.getEmail(), saved.getEmailVerificationCode(), "Code de vérification LightEvents", "Votre code de vérification LightEvents est : ");
-        return saved;
+        boolean emailSent = sendEmailCode(saved.getEmail(), saved.getEmailVerificationCode(), "Code de vérification LightEvents", "Votre code de vérification LightEvents est : ");
+        return response(saved, emailSent ? null : saved.getEmailVerificationCode(), emailSent ? "Code de vérification envoyé par email" : "Email indisponible: utilisez le code de test affiché pour vérifier ce compte");
     }
 
     @Transactional
@@ -80,8 +80,8 @@ public class AccountService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Account not found"));
         a.setEmailVerificationCode(code());
         Account saved = accounts.save(a);
-        sendEmailCode(saved.getEmail(), saved.getEmailVerificationCode(), "Code de connexion LightEvents", "Votre code de connexion LightEvents est : ");
-        return new AuthDtos.LoginStartResponse(saved.getEmail(), "Code de connexion envoyé par email");
+        boolean emailSent = sendEmailCode(saved.getEmail(), saved.getEmailVerificationCode(), "Code de connexion LightEvents", "Votre code de connexion LightEvents est : ");
+        return new AuthDtos.LoginStartResponse(saved.getEmail(), emailSent ? "Code de connexion envoyé par email" : "Email indisponible: utilisez le code de test affiché pour vous connecter", emailSent ? null : saved.getEmailVerificationCode());
     }
 
     @Transactional
@@ -138,15 +138,22 @@ public class AccountService {
     }
 
     public AuthDtos.AccountResponse response(Account a) {
-        return new AuthDtos.AccountResponse(a.getId(), a.getFullName(), a.getEmail(), a.getPhone(), a.getRole(), a.isVerified(), a.getApiToken());
+        return response(a, null, null);
     }
 
-    private void sendEmailCode(String email, String code, String subject, String prefix) {
-        NotificationService notificationService = notifications.orElseThrow(() -> new ApiException(HttpStatus.BAD_GATEWAY, "Email service is not configured"));
+    public AuthDtos.AccountResponse response(Account a, String codePreview, String message) {
+        return new AuthDtos.AccountResponse(a.getId(), a.getFullName(), a.getEmail(), a.getPhone(), a.getRole(), a.isVerified(), a.getApiToken(), codePreview, message);
+    }
+
+    private boolean sendEmailCode(String email, String code, String subject, String prefix) {
+        if (notifications.isEmpty()) {
+            return false;
+        }
         try {
-            notificationService.sendEmail(email, subject, prefix + code + "\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.");
+            notifications.get().sendEmail(email, subject, prefix + code + "\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.");
+            return true;
         } catch (Exception e) {
-            throw new ApiException(HttpStatus.BAD_GATEWAY, "Impossible d'envoyer le code par email pour le moment");
+            return false;
         }
     }
 
