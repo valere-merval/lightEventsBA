@@ -2,6 +2,7 @@ package com.lightevents.auth;
 
 import com.lightevents.notifications.NotificationService;
 import com.lightevents.shared.ApiException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,12 +17,20 @@ public class AccountService {
     private final Optional<NotificationService> notifications;
     private final SecureRandom random = new SecureRandom();
 
+    @Value("${spring.mail.host:}")
+    private String mailHost;
+
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
+    @Value("${app.auth.email-required:false}")
+    private boolean emailRequired;
+
     public AccountService(AccountRepository accounts, Optional<NotificationService> notifications) {
         this.accounts = accounts;
         this.notifications = notifications;
     }
 
-    @Transactional
     public AuthDtos.AccountResponse register(AuthDtos.RegisterRequest r) {
         if (blank(r.email())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Email is required");
@@ -74,7 +83,6 @@ public class AccountService {
         return accounts.save(a);
     }
 
-    @Transactional
     public AuthDtos.LoginStartResponse startEmailLogin(AuthDtos.LoginRequest r) {
         Account a = accounts.findByEmailIgnoreCase(normalizeEmail(r.email()))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Account not found"));
